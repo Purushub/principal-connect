@@ -8,9 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { CalendarDays, Clock, CheckCircle2, ShieldCheck } from "lucide-react";
+import { CalendarDays, Clock, CheckCircle2, ShieldCheck, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { z } from "zod";
 
 export const Route = createFileRoute("/")({
@@ -30,16 +33,22 @@ const schema = z.object({
   purpose: z.string().trim().min(5, "Purpose is required").max(500),
 });
 
+function isoFromDate(d: Date) {
+  const tz = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - tz).toISOString().slice(0, 10);
+}
+
 function BookingPage() {
-  const date = todayISO();
+  const [date, setDate] = useState<string>(todayISO());
   const [booked, setBooked] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [confirmed, setConfirmed] = useState<{ slot: number; name: string } | null>(null);
+  const [confirmed, setConfirmed] = useState<{ slot: number; name: string; date: string } | null>(null);
 
-  const fetchBooked = async () => {
-    const { data, error } = await supabase.rpc("get_booked_slots", { _date: date });
+  const fetchBooked = async (d: string) => {
+    setLoading(true);
+    const { data, error } = await supabase.rpc("get_booked_slots", { _date: d });
     if (error) {
       toast.error("Could not load slots");
     } else {
@@ -49,9 +58,8 @@ function BookingPage() {
   };
 
   useEffect(() => {
-    fetchBooked();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    fetchBooked(date);
+  }, [date]);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -80,13 +88,13 @@ function BookingPage() {
       } else {
         toast.error("Could not book. Please try again.");
       }
-      await fetchBooked();
+      await fetchBooked(date);
       setActiveSlot(null);
       return;
     }
-    setConfirmed({ slot: activeSlot, name: parsed.data.name });
+    setConfirmed({ slot: activeSlot, name: parsed.data.name, date });
     setActiveSlot(null);
-    await fetchBooked();
+    await fetchBooked(date);
   };
 
   const heroStyle = useMemo(() => ({ background: "var(--gradient-hero)" }), []);
@@ -115,19 +123,46 @@ function BookingPage() {
             Book a 20-minute meeting with the Principal
           </h1>
           <p className="mt-3 text-base md:text-lg opacity-90">
-            {formatDate(date)} · 9:00 AM – 10:40 AM
+            Daily slots · 9:00 AM – 10:40 AM
           </p>
         </div>
       </section>
 
       <main className="mx-auto max-w-5xl px-4 py-10">
-        <div className="mb-6 flex items-center gap-4 text-sm">
-          <span className="inline-flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-slot-available" /> Available
-          </span>
-          <span className="inline-flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-slot-booked" /> Booked
-          </span>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn("justify-start gap-2 text-left font-normal")}
+              >
+                <CalendarIcon className="h-4 w-4" />
+                {formatDate(date)}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={new Date(date + "T00:00:00")}
+                onSelect={(d) => d && setDate(isoFromDate(d))}
+                disabled={(d) => {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  return d < today;
+                }}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+          <div className="flex items-center gap-4 text-sm">
+            <span className="inline-flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-slot-available" /> Available
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-slot-booked" /> Booked
+            </span>
+          </div>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -210,7 +245,7 @@ function BookingPage() {
               {confirmed && (
                 <>
                   Thanks, {confirmed.name}! Your meeting is reserved for{" "}
-                  <strong>{SLOTS[confirmed.slot].label}</strong> on {formatDate(date)}.
+                  <strong>{SLOTS[confirmed.slot].label}</strong> on {formatDate(confirmed.date)}.
                 </>
               )}
             </DialogDescription>
