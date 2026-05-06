@@ -123,7 +123,7 @@ function BookingPage() {
             Book a 20-minute meeting with the Principal
           </h1>
           <p className="mt-3 text-base md:text-lg opacity-90">
-            {formatDate(date)} · 9:00 AM – 10:40 AM
+            Daily slots · 9:00 AM – 10:40 AM
           </p>
         </div>
       </section>
