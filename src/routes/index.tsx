@@ -245,7 +245,7 @@ function BookingPage() {
               {confirmed && (
                 <>
                   Thanks, {confirmed.name}! Your meeting is reserved for{" "}
-                  <strong>{SLOTS[confirmed.slot].label}</strong> on {formatDate(date)}.
+                  <strong>{SLOTS[confirmed.slot].label}</strong> on {formatDate(confirmed.date)}.
                 </>
               )}
             </DialogDescription>
