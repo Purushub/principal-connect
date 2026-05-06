@@ -59,6 +59,12 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-slot-available: var(--slot-available);
+  --color-slot-available-foreground: var(--slot-available-foreground);
+  --color-slot-booked: var(--slot-booked);
+  --color-slot-booked-foreground: var(--slot-booked-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
 }
 
 :root {
