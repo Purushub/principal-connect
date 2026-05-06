@@ -129,13 +129,40 @@ function BookingPage() {
       </section>
 
       <main className="mx-auto max-w-5xl px-4 py-10">
-        <div className="mb-6 flex items-center gap-4 text-sm">
-          <span className="inline-flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-slot-available" /> Available
-          </span>
-          <span className="inline-flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-slot-booked" /> Booked
-          </span>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn("justify-start gap-2 text-left font-normal")}
+              >
+                <CalendarIcon className="h-4 w-4" />
+                {formatDate(date)}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={new Date(date + "T00:00:00")}
+                onSelect={(d) => d && setDate(isoFromDate(d))}
+                disabled={(d) => {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  return d < today;
+                }}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+          <div className="flex items-center gap-4 text-sm">
+            <span className="inline-flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-slot-available" /> Available
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-slot-booked" /> Booked
+            </span>
+          </div>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
