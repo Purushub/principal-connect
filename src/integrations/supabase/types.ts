@@ -73,6 +73,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_first_admin: { Args: never; Returns: boolean }
       get_booked_slots: {
         Args: { _date: string }
         Returns: {
