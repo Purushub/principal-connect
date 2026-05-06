@@ -33,16 +33,22 @@ const schema = z.object({
   purpose: z.string().trim().min(5, "Purpose is required").max(500),
 });
 
+function isoFromDate(d: Date) {
+  const tz = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - tz).toISOString().slice(0, 10);
+}
+
 function BookingPage() {
-  const date = todayISO();
+  const [date, setDate] = useState<string>(todayISO());
   const [booked, setBooked] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [confirmed, setConfirmed] = useState<{ slot: number; name: string } | null>(null);
+  const [confirmed, setConfirmed] = useState<{ slot: number; name: string; date: string } | null>(null);
 
-  const fetchBooked = async () => {
-    const { data, error } = await supabase.rpc("get_booked_slots", { _date: date });
+  const fetchBooked = async (d: string) => {
+    setLoading(true);
+    const { data, error } = await supabase.rpc("get_booked_slots", { _date: d });
     if (error) {
       toast.error("Could not load slots");
     } else {
@@ -52,9 +58,8 @@ function BookingPage() {
   };
 
   useEffect(() => {
-    fetchBooked();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    fetchBooked(date);
+  }, [date]);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
