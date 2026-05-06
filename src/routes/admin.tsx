@@ -42,11 +42,17 @@ function AdminLogin() {
       });
       if (error) {
         toast.error(error.message);
-      } else if (data.user) {
-        // First user becomes admin (auto-grant)
-        await supabase.from("user_roles").insert({ user_id: data.user.id, role: "admin" });
-        toast.success("Admin account created. Signing in…");
-        navigate({ to: "/admin/dashboard" });
+      } else if (data.session) {
+        const { data: claimed } = await supabase.rpc("claim_first_admin");
+        if (claimed) {
+          toast.success("Admin account created.");
+          navigate({ to: "/admin/dashboard" });
+        } else {
+          toast.error("An admin already exists. Contact the existing Principal.");
+          await supabase.auth.signOut();
+        }
+      } else {
+        toast.success("Check your email to confirm, then sign in.");
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
