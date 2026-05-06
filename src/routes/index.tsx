@@ -88,13 +88,13 @@ function BookingPage() {
       } else {
         toast.error("Could not book. Please try again.");
       }
-      await fetchBooked();
+      await fetchBooked(date);
       setActiveSlot(null);
       return;
     }
-    setConfirmed({ slot: activeSlot, name: parsed.data.name });
+    setConfirmed({ slot: activeSlot, name: parsed.data.name, date });
     setActiveSlot(null);
-    await fetchBooked();
+    await fetchBooked(date);
   };
 
   const heroStyle = useMemo(() => ({ background: "var(--gradient-hero)" }), []);
