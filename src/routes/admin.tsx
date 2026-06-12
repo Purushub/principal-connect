@@ -22,7 +22,7 @@ function AdminGate() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const email = String(fd.get("email") || "").trim();
-    const code = String(fd.get("code") || "");
+    const code = String(fd.get("code") || "").trim();
     if (!email || !code) {
       toast.error("Enter your email and the access code");
       return;
@@ -33,7 +33,10 @@ function AdminGate() {
       setLoading(false);
       return;
     }
-    sessionStorage.setItem("admin_ok", "1");
+    try {
+      sessionStorage.setItem("admin_ok", "1");
+    } catch {}
+    setLoading(false);
     navigate({ to: "/admin/dashboard" });
   };
 
