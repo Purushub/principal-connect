@@ -67,10 +67,11 @@ function Dashboard() {
     setToDelete(null);
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
+  const signOut = () => {
+    sessionStorage.removeItem("admin_ok");
     navigate({ to: "/admin" });
   };
+
 
   const bySlot = new Map(bookings.map((b) => [b.slot_index, b]));
 
