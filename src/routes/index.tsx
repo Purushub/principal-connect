@@ -8,11 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { CalendarDays, Clock, CheckCircle2, ShieldCheck, CalendarIcon } from "lucide-react";
+import { CalendarDays, Clock, CheckCircle2, ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 
@@ -129,41 +127,17 @@ function BookingPage() {
       </section>
 
       <main className="mx-auto max-w-5xl px-4 py-10">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn("justify-start gap-2 text-left font-normal")}
-              >
-                <CalendarIcon className="h-4 w-4" />
-                {formatDate(date)}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={new Date(date + "T00:00:00")}
-                onSelect={(d) => d && setDate(isoFromDate(d))}
-                disabled={(d) => {
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  return d < today;
-                }}
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
-              />
-            </PopoverContent>
-          </Popover>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="inline-flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-slot-available" /> Available
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-slot-booked" /> Booked
-            </span>
-          </div>
+        <WeekStrip date={date} onChange={setDate} />
+
+        <div className="mb-6 mt-6 flex items-center justify-end gap-4 text-sm">
+          <span className="inline-flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-slot-available" /> Available
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-slot-booked" /> Booked
+          </span>
         </div>
+
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {SLOTS.map((s) => {
@@ -253,6 +227,101 @@ function BookingPage() {
           <Button onClick={() => setConfirmed(null)} className="w-full">Done</Button>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+const DOW = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function startOfWeek(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  const day = (x.getDay() + 6) % 7; // Monday = 0
+  x.setDate(x.getDate() - day);
+  return x;
+}
+
+function WeekStrip({ date, onChange }: { date: string; onChange: (iso: string) => void }) {
+  const selected = new Date(date + "T00:00:00");
+  const [anchor, setAnchor] = useState<Date>(startOfWeek(selected));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(anchor);
+    d.setDate(anchor.getDate() + i);
+    return d;
+  });
+
+  const shiftWeek = (delta: number) => {
+    const next = new Date(anchor);
+    next.setDate(anchor.getDate() + delta * 7);
+    setAnchor(next);
+  };
+
+  const monthLabel = `${MONTHS[days[3].getMonth()]}, ${days[3].getFullYear()}`;
+
+  return (
+    <div className="overflow-hidden rounded-2xl border bg-card shadow-[var(--shadow-card)]">
+      <div className="flex items-center justify-between px-4 py-3 text-sm font-medium">
+        <button
+          onClick={() => shiftWeek(-1)}
+          className="rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label="Previous week"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <div className="tracking-wide">{monthLabel}</div>
+        <button
+          onClick={() => shiftWeek(1)}
+          className="rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label="Next week"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 border-t bg-muted/30 px-2 py-3">
+        {days.map((d, i) => {
+          const iso = isoFromDate(d);
+          const isSelected = iso === date;
+          const isPast = d < today;
+          return (
+            <button
+              key={iso}
+              disabled={isPast}
+              onClick={() => onChange(iso)}
+              className={cn(
+                "flex flex-col items-center gap-1 rounded-xl py-2 transition-colors",
+                isPast && "opacity-40 cursor-not-allowed",
+                !isPast && !isSelected && "hover:bg-accent",
+              )}
+            >
+              <span
+                className={cn(
+                  "text-[10px] font-semibold tracking-wider",
+                  isSelected ? "text-brand" : "text-muted-foreground",
+                )}
+              >
+                {DOW[i]}
+              </span>
+              <span
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold",
+                  isSelected
+                    ? "bg-brand text-brand-foreground shadow-[var(--shadow-card)]"
+                    : "text-foreground",
+                )}
+              >
+                {d.getDate()}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
