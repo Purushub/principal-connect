@@ -230,3 +230,98 @@ function BookingPage() {
     </div>
   );
 }
+
+const DOW = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function startOfWeek(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  const day = (x.getDay() + 6) % 7; // Monday = 0
+  x.setDate(x.getDate() - day);
+  return x;
+}
+
+function WeekStrip({ date, onChange }: { date: string; onChange: (iso: string) => void }) {
+  const selected = new Date(date + "T00:00:00");
+  const [anchor, setAnchor] = useState<Date>(startOfWeek(selected));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(anchor);
+    d.setDate(anchor.getDate() + i);
+    return d;
+  });
+
+  const shiftWeek = (delta: number) => {
+    const next = new Date(anchor);
+    next.setDate(anchor.getDate() + delta * 7);
+    setAnchor(next);
+  };
+
+  const monthLabel = `${MONTHS[days[3].getMonth()]}, ${days[3].getFullYear()}`;
+
+  return (
+    <div className="overflow-hidden rounded-2xl border bg-card shadow-[var(--shadow-card)]">
+      <div className="flex items-center justify-between px-4 py-3 text-sm font-medium">
+        <button
+          onClick={() => shiftWeek(-1)}
+          className="rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label="Previous week"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <div className="tracking-wide">{monthLabel}</div>
+        <button
+          onClick={() => shiftWeek(1)}
+          className="rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label="Next week"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 border-t bg-muted/30 px-2 py-3">
+        {days.map((d, i) => {
+          const iso = isoFromDate(d);
+          const isSelected = iso === date;
+          const isPast = d < today;
+          return (
+            <button
+              key={iso}
+              disabled={isPast}
+              onClick={() => onChange(iso)}
+              className={cn(
+                "flex flex-col items-center gap-1 rounded-xl py-2 transition-colors",
+                isPast && "opacity-40 cursor-not-allowed",
+                !isPast && !isSelected && "hover:bg-accent",
+              )}
+            >
+              <span
+                className={cn(
+                  "text-[10px] font-semibold tracking-wider",
+                  isSelected ? "text-brand" : "text-muted-foreground",
+                )}
+              >
+                {DOW[i]}
+              </span>
+              <span
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold",
+                  isSelected
+                    ? "bg-brand text-brand-foreground shadow-[var(--shadow-card)]"
+                    : "text-foreground",
+                )}
+              >
+                {d.getDate()}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
