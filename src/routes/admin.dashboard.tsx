@@ -34,21 +34,14 @@ function Dashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [toDelete, setToDelete] = useState<Booking | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (!session) navigate({ to: "/admin" });
-    });
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) navigate({ to: "/admin" });
-      else setAuthChecked(true);
-    });
-    return () => sub.subscription.unsubscribe();
+    if (typeof window !== "undefined" && sessionStorage.getItem("admin_ok") !== "1") {
+      navigate({ to: "/admin" });
+    }
   }, [navigate]);
 
   useEffect(() => {
-    if (!authChecked) return;
     setLoading(true);
     supabase
       .from("bookings")
@@ -56,11 +49,12 @@ function Dashboard() {
       .eq("booking_date", date)
       .order("slot_index")
       .then(({ data, error }) => {
-        if (error) toast.error("Could not load bookings — admin role required.");
+        if (error) toast.error("Could not load bookings");
         setBookings((data ?? []) as Booking[]);
         setLoading(false);
       });
-  }, [date, authChecked]);
+  }, [date]);
+
 
   const cancel = async () => {
     if (!toDelete) return;
@@ -73,10 +67,11 @@ function Dashboard() {
     setToDelete(null);
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
+  const signOut = () => {
+    sessionStorage.removeItem("admin_ok");
     navigate({ to: "/admin" });
   };
+
 
   const bySlot = new Map(bookings.map((b) => [b.slot_index, b]));
 
