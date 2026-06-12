@@ -24,6 +24,7 @@ export type Database = {
           phone: string
           purpose: string
           slot_index: number
+          status: string
         }
         Insert: {
           booking_date: string
@@ -34,6 +35,7 @@ export type Database = {
           phone: string
           purpose: string
           slot_index: number
+          status?: string
         }
         Update: {
           booking_date?: string
@@ -44,6 +46,7 @@ export type Database = {
           phone?: string
           purpose?: string
           slot_index?: number
+          status?: string
         }
         Relationships: []
       }
